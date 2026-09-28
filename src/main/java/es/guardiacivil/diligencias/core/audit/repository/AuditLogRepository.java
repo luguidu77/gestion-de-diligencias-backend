@@ -1,0 +1,18 @@
+package es.guardiacivil.diligencias.core.audit.repository;
+
+import es.guardiacivil.diligencias.core.audit.entity.AuditLog;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
+    List<AuditLog> findByUsuarioTip(String usuarioTip);
+    List<AuditLog> findByUnidadCodigo(String unidadCodigo);
+    Page<AuditLog> findByUnidadCodigo(String unidadCodigo, Pageable pageable);
+}
+
+

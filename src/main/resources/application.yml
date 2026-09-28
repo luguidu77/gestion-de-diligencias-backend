@@ -1,0 +1,89 @@
+server:
+  port: ${PORT:8081}
+
+spring:
+  application:
+    name: diligencias-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:lab}
+
+  # Base de Datos PostgreSQL
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  # JPA / Hibernate
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true
+    out-of-order: false
+
+  # OAuth2 Resource Server — solo jwk-set-uri, sin issuer-uri hardcodeado.
+  # La validación del emisor se controla con app.security.jwt.issuer-suffix.
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OIDC_JWK_SET_URI}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Configuración de seguridad OIDC — totalmente configurable por entorno.
+# Cambiar de proveedor de identidad solo requiere actualizar estas propiedades.
+# ─────────────────────────────────────────────────────────────────────────────
+app:
+  security:
+    jwt:
+      # URI del endpoint JWKS para verificar la firma de los tokens.
+      jwk-set-uri: ${OIDC_JWK_SET_URI}
+      # Sufijo del claim 'iss' que se acepta como válido.
+      # Usar sufijo de realm (p.ej. /realms/diligencias) permite validar tokens emitidos
+      # tanto desde túneles SSH locales como desde la URL interna del pod.
+      issuer-suffix: ${OIDC_ISSUER_SUFFIX:/realms/diligencias}
+    claims:
+      # Nombre del claim que contiene el identificador único del usuario.
+      username: ${CLAIM_USERNAME:preferred_username}
+      # Nombre del claim con el nombre completo para mostrar.
+      display-name: ${CLAIM_DISPLAY_NAME:name}
+      # Nombre del claim con el rango o empleo del agente (informativo).
+      rank: ${CLAIM_RANK:rango}
+      # Nombre del claim con el código de unidad policial.
+      unit: ${CLAIM_UNIT:unidad}
+      # Ruta de claim de roles en notación punto. Soporta rutas anidadas.
+      # Ejemplos:
+      #   roles                                      (claim directo)
+      #   realm_access.roles                         (realm roles de Keycloak)
+      #   resource_access.diligencias-backend.roles  (client roles de Keycloak)
+      roles-path: ${CLAIM_ROLES_PATH:resource_access.diligencias-backend.roles}
+
+# Integración con Alfresco Content Services (gestor documental)
+alfresco:
+  url: ${ALFRESCO_URL}
+  username: ${ALFRESCO_USER}
+  password: ${ALFRESCO_PASSWORD}
+  root-folder-path: ${ALFRESCO_ROOT_PATH:Sites/gestion-diligencias/documentLibrary}
+
+# Documentación OpenAPI y Swagger UI (SpringDoc)
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:true}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:true}
+    path: /swagger-ui.html
+    persist-authorization: true
+    operations-sorter: method
+    tags-sorter: alpha

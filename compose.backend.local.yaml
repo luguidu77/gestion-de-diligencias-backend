@@ -1,0 +1,20 @@
+# Arranque inicial: JWT y Alfresco apuntan al propio contenedor hasta añadir servicios locales.
+# Permite comprobar arranque y health; no valida autenticacion ni gestion documental.
+services:
+  backend:
+    image: diligencias-backend:local
+    environment:
+      PORT: "8081"
+      SPRING_PROFILES_ACTIVE: local
+      DB_URL: jdbc:postgresql://postgres:5432/diligencias
+      DB_USER: diligencias_user
+      DB_PASSWORD: ${DILIGENCIAS_DB_PASSWORD:?Define DILIGENCIAS_DB_PASSWORD}
+      OIDC_JWK_SET_URI: ${LOCAL_OIDC_JWK_SET_URI:-http://127.0.0.1:59999/jwks}
+      ALFRESCO_URL: ${LOCAL_ALFRESCO_URL:-http://127.0.0.1:59998/alfresco}
+      ALFRESCO_USER: ${LOCAL_ALFRESCO_USER:-sin-configurar}
+      ALFRESCO_PASSWORD: ${LOCAL_ALFRESCO_PASSWORD:-sin-configurar}
+    ports:
+      - "127.0.0.1:8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy

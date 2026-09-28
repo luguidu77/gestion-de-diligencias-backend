@@ -1,0 +1,10 @@
+.git
+.idea
+target
+compile_out.txt
+error-contexto.txt
+compose.local.yaml
+.env
+.env.*
+src/main/resources/application-local.yml
+src/main/resources/application-lab.yml

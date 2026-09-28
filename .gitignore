@@ -1,0 +1,35 @@
+# Maven
+target/
+*.class
+compile_out.txt
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# Visual Studio Code
+.vscode/
+
+# Variables y secretos
+.env
+.env.*
+!.env.example
+application-local.properties
+application-prod.properties
+application-local.yml
+application-prod.yml
+
+# Logs
+*.log
+logs/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+# Copias de seguridad
+*.bak
+
+# Configuración local de pruebas con Alfresco real
+src/test/resources/application-alfresco-real.properties

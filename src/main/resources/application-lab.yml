@@ -1,0 +1,48 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PERFIL: lab
+# Entorno de laboratorio — Keycloak 24 + OpenLDAP en VPS Oracle Cloud ARM64
+# Despliegue con Podman rootless en la red CNI 'diligencias-net'
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# PROVEEDOR DE IDENTIDAD: Keycloak (rol de laboratorio, no dependencia funcional)
+#
+# Acceso desde Windows vía túnel SSH doble:
+#   ssh -L 8080:127.0.0.1:8080 -L 8081:127.0.0.1:8081 ubuntu@82.70.79.233
+#
+# Los tokens JWT son emitidos con 'iss' que contiene 'localhost:8080' (URL del túnel),
+# pero la firma se verifica contra el endpoint JWKS interno del pod (keycloak-pod-0:8080).
+# OIDC_ISSUER_SUFFIX acepta ambas URLs mientras terminen en el mismo sufijo de realm.
+# ─────────────────────────────────────────────────────────────────────────────
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://diligencias-db-pod-0:5432/diligencias}
+    username: ${DB_USER:diligencias_user}
+    password: ${DB_PASSWORD:diligencias_password}
+  jpa:
+    show-sql: ${JPA_SHOW_SQL:true}
+    properties:
+      hibernate:
+        use_sql_comments: ${JPA_USE_SQL_COMMENTS:true}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OIDC_JWK_SET_URI:http://keycloak-pod-0:8080/realms/diligencias/protocol/openid-connect/certs}
+
+app:
+  security:
+    jwt:
+      jwk-set-uri: ${OIDC_JWK_SET_URI:http://keycloak-pod-0:8080/realms/diligencias/protocol/openid-connect/certs}
+      issuer-suffix: ${OIDC_ISSUER_SUFFIX:/realms/diligencias}
+    claims:
+      username: ${CLAIM_USERNAME:preferred_username}
+      display-name: ${CLAIM_DISPLAY_NAME:name}
+      rank: ${CLAIM_RANK:rango}
+      unit: ${CLAIM_UNIT:unidad}
+      roles-path: ${CLAIM_ROLES_PATH:realm_access.roles}
+
+alfresco:
+  url: ${ALFRESCO_URL:http://alfresco-pod-0:8080/alfresco/api/-default-/public/alfresco/versions/1}
+  username: ${ALFRESCO_USER:admin}
+  password: ${ALFRESCO_PASSWORD:admin_password}

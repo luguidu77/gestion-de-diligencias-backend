@@ -1,0 +1,51 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PERFIL: pro
+# Entorno de producción — Pendiente de configuración por el equipo de TI
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# IMPORTANTE: Este fichero NO debe contener credenciales reales.
+# En producción, todas las propiedades sensibles deben inyectarse como:
+#   - Variables de entorno del orquestador (Kubernetes Secrets, Podman secrets)
+#   - Vault corporativo (HashiCorp Vault, CyberArk, AWS Secrets Manager)
+#
+# Activar este perfil con: SPRING_PROFILES_ACTIVE=pro
+# ─────────────────────────────────────────────────────────────────────────────
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OIDC_JWK_SET_URI}
+
+app:
+  security:
+    jwt:
+      jwk-set-uri: ${OIDC_JWK_SET_URI}
+      issuer-suffix: ${OIDC_ISSUER_SUFFIX}
+    claims:
+      username: ${CLAIM_USERNAME:preferred_username}
+      display-name: ${CLAIM_DISPLAY_NAME:name}
+      rank: ${CLAIM_RANK:rango}
+      unit: ${CLAIM_UNIT:unidad}
+      roles-path: ${CLAIM_ROLES_PATH:roles}
+
+alfresco:
+  url: ${ALFRESCO_URL}
+  username: ${ALFRESCO_USER}
+  password: ${ALFRESCO_PASSWORD}
+
+# Swagger UI deshabilitado en producción por seguridad
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
