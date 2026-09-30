@@ -6,6 +6,9 @@ spring:
     name: diligencias-backend
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:lab}
+  batch:
+    job:
+      enabled: false
 
   # Base de Datos PostgreSQL
   datasource:

@@ -2,7 +2,9 @@ FROM docker.io/eclipse-temurin:25-jdk AS build
 WORKDIR /build
 COPY gradlew settings.gradle build.gradle ./
 COPY gradle ./gradle
-RUN chmod +x gradlew && ./gradlew dependencies --configuration runtimeClasspath --no-daemon
+RUN sed -i 's/\r$//' gradlew \
+    && chmod +x gradlew \
+    && ./gradlew dependencies --configuration runtimeClasspath --no-daemon
 COPY src ./src
 RUN ./gradlew clean bootJar --no-daemon
 
