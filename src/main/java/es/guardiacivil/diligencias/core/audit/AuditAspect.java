@@ -1,6 +1,6 @@
 package es.guardiacivil.diligencias.core.audit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import es.guardiacivil.diligencias.usuario.dto.AuthenticatedUser;
 import es.guardiacivil.diligencias.usuario.service.AuthenticatedUserService;
 import es.guardiacivil.diligencias.core.audit.entity.AuditLog;
@@ -146,4 +146,3 @@ public class AuditAspect {
         log.info("AuditorÃ­a registrada: {} por usuario {} (Unidad: {})", auditableEvent.action(), usuarioTip, unidadCodigo);
     }
 }
-

@@ -31,5 +31,9 @@ desktop.ini
 # Copias de seguridad
 *.bak
 
-# Configuración local de pruebas con Alfresco real
+# ConfiguraciÃ³n local de pruebas con Alfresco real
 src/test/resources/application-alfresco-real.properties
+
+# Gradle
+build/
+.gradle/

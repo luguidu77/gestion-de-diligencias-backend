@@ -100,24 +100,6 @@ public class SecurityConfig {
     }
 
     /**
-     * Omite la cadena de filtros de seguridad para las rutas de documentaciÃ³n OpenAPI y Swagger UI.
-     * Garantiza que la lectura de la especificaciÃ³n y la consola web no requieran JWT ni emitan 401.
-     */
-    @Bean
-    public org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().requestMatchers(
-                new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/v3/api-docs"),
-                new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/v3/api-docs/**"),
-                new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/v3/api-docs.yaml"),
-                new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/swagger-ui"),
-                new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/swagger-ui/**"),
-                new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/swagger-ui.html"),
-                new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/swagger-ui/index.html"),
-                new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/webjars/**")
-        );
-    }
-
-    /**
      * Construye el decodificador JWT con:
      * <ol>
      *   <li>ValidaciÃ³n de firma mediante clave pÃºblica obtenida de {@code OIDC_JWK_SET_URI}.</li>

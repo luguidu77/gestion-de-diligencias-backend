@@ -11,8 +11,10 @@ spring:
     locations: classpath:db/migration
     validate-on-migrate: true
   batch:
+    job:
+      enabled: false
     jdbc:
-      initialize-schema: always
+      initialize-schema: never
   security:
     oauth2:
       resourceserver:
