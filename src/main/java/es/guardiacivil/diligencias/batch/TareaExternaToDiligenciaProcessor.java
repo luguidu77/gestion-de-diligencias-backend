@@ -4,7 +4,7 @@ import es.guardiacivil.diligencias.tarea.dto.TareaExternaDTO;
 import es.guardiacivil.diligencias.diligencia.entity.Diligencia;
 import es.guardiacivil.diligencias.diligencia.entity.EstadoDiligencia;
 import es.guardiacivil.diligencias.diligencia.entity.GravedadDelito;
-import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 import java.time.Instant;
 

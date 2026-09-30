@@ -8,3 +8,6 @@ compose.local.yaml
 .env.*
 src/main/resources/application-local.yml
 src/main/resources/application-lab.yml
+
+build
+.gradle

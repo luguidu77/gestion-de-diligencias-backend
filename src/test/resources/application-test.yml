@@ -12,7 +12,7 @@ spring:
     validate-on-migrate: true
   batch:
     jdbc:
-      initialize-schema: always
+      initialize-schema: never
   security:
     oauth2:
       resourceserver:

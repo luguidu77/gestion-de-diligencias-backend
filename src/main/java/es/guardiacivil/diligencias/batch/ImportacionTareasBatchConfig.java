@@ -3,8 +3,8 @@ package es.guardiacivil.diligencias.batch;
 import es.guardiacivil.diligencias.tarea.dto.TareaExternaDTO;
 import es.guardiacivil.diligencias.diligencia.entity.Diligencia;
 import lombok.RequiredArgsConstructor;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -24,7 +24,8 @@ public class ImportacionTareasBatchConfig {
     @Bean
     public Step importacionTareasStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("importacionTareasStep", jobRepository)
-                .<TareaExternaDTO, Diligencia>chunk(10, transactionManager)
+                .<TareaExternaDTO, Diligencia>chunk(10)
+                .transactionManager(transactionManager)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
