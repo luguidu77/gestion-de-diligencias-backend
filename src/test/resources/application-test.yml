@@ -25,6 +25,7 @@ spring:
 
 OIDC_ISSUER_URI: http://localhost:8080/realms/diligencias
 OIDC_JWK_SET_URI: http://localhost:8080/realms/diligencias/protocol/openid-connect/certs
+OIDC_AUDIENCE: diligencias-backend
 
 logging:
   level:
