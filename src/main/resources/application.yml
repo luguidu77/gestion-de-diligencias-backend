@@ -35,8 +35,8 @@ spring:
     clean-disabled: true
     out-of-order: false
 
-  # OAuth2 Resource Server — solo jwk-set-uri, sin issuer-uri hardcodeado.
-  # La validación del emisor se controla con app.security.jwt.issuer-suffix.
+  # OAuth2 Resource Server: las claves públicas se obtienen mediante JWKS.
+  # Issuer y audience se validan mediante app.security.jwt.
   security:
     oauth2:
       resourceserver:
@@ -52,10 +52,10 @@ app:
     jwt:
       # URI del endpoint JWKS para verificar la firma de los tokens.
       jwk-set-uri: ${OIDC_JWK_SET_URI}
-      # Sufijo del claim 'iss' que se acepta como válido.
-      # Usar sufijo de realm (p.ej. /realms/diligencias) permite validar tokens emitidos
-      # tanto desde túneles SSH locales como desde la URL interna del pod.
-      issuer-suffix: ${OIDC_ISSUER_SUFFIX:/realms/diligencias}
+      # Emisor exacto que debe contener el claim 'iss' del JWT.
+      issuer-uri: ${OIDC_ISSUER_URI}
+      # API destinataria que debe aparecer en el claim 'aud'.
+      audience: ${OIDC_AUDIENCE:diligencias-backend}
     claims:
       # Nombre del claim que contiene el identificador único del usuario.
       username: ${CLAIM_USERNAME:preferred_username}

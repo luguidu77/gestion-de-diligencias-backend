@@ -11,7 +11,7 @@
 #
 # Los tokens JWT son emitidos con 'iss' que contiene 'localhost:8080' (URL del túnel),
 # pero la firma se verifica contra el endpoint JWKS interno del pod (keycloak-pod-0:8080).
-# OIDC_ISSUER_SUFFIX acepta ambas URLs mientras terminen en el mismo sufijo de realm.
+# OIDC_ISSUER_URI debe coincidir exactamente con el claim 'iss' emitido en el token.
 # ─────────────────────────────────────────────────────────────────────────────
 
 spring:
@@ -34,7 +34,8 @@ app:
   security:
     jwt:
       jwk-set-uri: ${OIDC_JWK_SET_URI:http://keycloak-pod-0:8080/realms/diligencias/protocol/openid-connect/certs}
-      issuer-suffix: ${OIDC_ISSUER_SUFFIX:/realms/diligencias}
+      issuer-uri: ${OIDC_ISSUER_URI:http://localhost:8080/realms/diligencias}
+      audience: ${OIDC_AUDIENCE:diligencias-backend}
     claims:
       username: ${CLAIM_USERNAME:preferred_username}
       display-name: ${CLAIM_DISPLAY_NAME:name}
