@@ -30,7 +30,8 @@ app:
   security:
     jwt:
       jwk-set-uri: ${OIDC_JWK_SET_URI}
-      issuer-suffix: ${OIDC_ISSUER_SUFFIX}
+      issuer-uri: ${OIDC_ISSUER_URI}
+      audience: ${OIDC_AUDIENCE}
     claims:
       username: ${CLAIM_USERNAME:preferred_username}
       display-name: ${CLAIM_DISPLAY_NAME:name}

@@ -10,6 +10,8 @@ services:
       DB_USER: diligencias_user
       DB_PASSWORD: ${DILIGENCIAS_DB_PASSWORD:?Define DILIGENCIAS_DB_PASSWORD}
       OIDC_JWK_SET_URI: ${LOCAL_OIDC_JWK_SET_URI:-http://127.0.0.1:59999/jwks}
+      OIDC_ISSUER_URI: ${LOCAL_OIDC_ISSUER_URI:-http://localhost:8080/realms/diligencias}
+      OIDC_AUDIENCE: ${LOCAL_OIDC_AUDIENCE:-diligencias-backend}
       ALFRESCO_URL: ${LOCAL_ALFRESCO_URL:-http://127.0.0.1:59998/alfresco}
       ALFRESCO_USER: ${LOCAL_ALFRESCO_USER:-sin-configurar}
       ALFRESCO_PASSWORD: ${LOCAL_ALFRESCO_PASSWORD:-sin-configurar}

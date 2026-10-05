@@ -16,35 +16,30 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.util.Assert;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * ConfiguraciÃ³n de seguridad del backend REST.
+ * Configuración de seguridad del backend REST.
  *
- * <p>Toda la configuraciÃ³n sensible se inyecta desde propiedades/variables de entorno.
- * No se codifica ninguna URL ni lÃ³gica especÃ­fica de Keycloak u otro proveedor.</p>
+ * <p>Toda la configuración sensible se inyecta desde propiedades o variables de entorno.
+ * No se codifica ninguna URL ni lógica específica de Keycloak u otro proveedor.</p>
  *
  * <p>El {@link JwtDecoder} se configura con:</p>
  * <ul>
- *   <li>{@code OIDC_JWK_SET_URI}: URI del endpoint de claves pÃºblicas JWKS del proveedor.</li>
- *   <li>{@code OIDC_ISSUER_SUFFIX}: sufijo que debe coincidir con el claim {@code iss} del token.
- *       Permite validar tokens emitidos desde distintas URLs del mismo realm
- *       (p.ej. vÃ­a tÃºnel SSH {@code localhost:8080} o directamente {@code keycloak-pod-0:8080})
- *       sin requerir coincidencia exacta de URL.</li>
+ *   <li>{@code OIDC_JWK_SET_URI}: endpoint de claves públicas JWKS.</li>
+ *   <li>{@code OIDC_ISSUER_URI}: emisor exacto requerido en el claim {@code iss}.</li>
+ *   <li>{@code OIDC_AUDIENCE}: API requerida en el claim {@code aud}.</li>
  * </ul>
- *
- * <p>En producciÃ³n, si el proveedor siempre emite tokens con el mismo {@code iss}, se puede
- * establecer {@code OIDC_ISSUER_SUFFIX} al path completo del realm para mayor rigor.</p>
  */
 @Configuration
 @EnableWebSecurity
@@ -56,25 +51,25 @@ public class SecurityConfig {
     private final JwtAuthConverter jwtAuthConverter;
 
     /**
-     * URI del endpoint JWKS para obtener las claves pÃºblicas del proveedor OIDC.
+     * URI del endpoint JWKS para obtener las claves públicas del proveedor OIDC.
      * Configurable mediante la variable de entorno {@code OIDC_JWK_SET_URI}.
      */
     @Value("${app.security.jwt.jwk-set-uri}")
     private String jwkSetUri;
 
     /**
-     * URI exacto del emisor que se acepta como vÃ¡lido.
+     * URI exacto del emisor que se acepta como válido.
      * Configurable mediante {@code OIDC_ISSUER_URI}.
-     * Si es nulo o vacÃ­o, solo se valida la firma y la caducidad del token.
+     * Es obligatorio para impedir que se acepten tokens de otro emisor.
      */
-    @Value("${app.security.jwt.issuer-uri:#{null}}")
+    @Value("${app.security.jwt.issuer-uri}")
     private String issuerUri;
 
     /**
-     * Audience esperado en el token JWT.
-     * Si no se configura, no se valida este claim.
+     * Audience esperado en el token JWT. Es obligatorio para asegurar que
+     * el token está destinado a esta API.
      */
-    @Value("${app.security.jwt.audience:#{null}}")
+    @Value("${app.security.jwt.audience}")
     private String expectedAudience;
 
     @Bean
@@ -102,33 +97,36 @@ public class SecurityConfig {
     /**
      * Construye el decodificador JWT con:
      * <ol>
-     *   <li>ValidaciÃ³n de firma mediante clave pÃºblica obtenida de {@code OIDC_JWK_SET_URI}.</li>
-     *   <li>ValidaciÃ³n de caducidad ({@code exp} y {@code nbf}).</li>
-     *   <li>ValidaciÃ³n de sufijo del emisor si {@code OIDC_ISSUER_SUFFIX} estÃ¡ configurado.</li>
+     *   <li>Validación de firma mediante las claves de {@code OIDC_JWK_SET_URI}.</li>
+     *   <li>Validación temporal de {@code exp} y {@code nbf}.</li>
+     *   <li>Validación exacta del emisor mediante {@code OIDC_ISSUER_URI}.</li>
+     *   <li>Validación de audiencia mediante {@code OIDC_AUDIENCE}.</li>
      * </ol>
      *
-     * <p>No contiene ninguna referencia a Keycloak ni a URLs especÃ­ficas de ningÃºn proveedor.</p>
+     * <p>No contiene referencias a URLs específicas de ningún proveedor.</p>
      */
     @Bean
     public JwtDecoder jwtDecoder() {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
 
-        List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();
+        Assert.hasText(issuerUri, "La propiedad app.security.jwt.issuer-uri es obligatoria");
+        Assert.hasText(expectedAudience, "La propiedad app.security.jwt.audience es obligatoria");
 
-        if (issuerUri != null && !issuerUri.isBlank()) {
-            validators.add(org.springframework.security.oauth2.jwt.JwtValidators.createDefaultWithIssuer(issuerUri.trim()));
-            log.info("ValidaciÃ³n estricta de emisor JWT activa. Issuer requerido: '{}'", issuerUri.trim());
-        } else {
-            validators.add(new JwtTimestampValidator());
-            log.warn("app.security.jwt.issuer-uri no configurado. Solo se valida firma y caducidad del token.");
-        }
+        String requiredIssuer = issuerUri.trim();
+        String requiredAudience = expectedAudience.trim();
 
-        if (expectedAudience != null && !expectedAudience.isBlank()) {
-            validators.add(new AudienceValidator(expectedAudience.trim()));
-            log.info("ValidaciÃ³n de audiencia activa. Audience requerido: '{}'", expectedAudience.trim());
-        }
+        List<OAuth2TokenValidator<Jwt>> validators = List.of(
+                JwtValidators.createDefaultWithIssuer(requiredIssuer),
+                new AudienceValidator(requiredAudience)
+        );
 
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(validators));
+
+        log.info(
+                "Validación JWT estricta activa. Issuer: '{}'; audience: '{}'",
+                requiredIssuer,
+                requiredAudience
+        );
         return decoder;
     }
 
@@ -145,7 +143,7 @@ public class SecurityConfig {
                 return org.springframework.security.oauth2.core.OAuth2TokenValidatorResult.success();
             }
             return org.springframework.security.oauth2.core.OAuth2TokenValidatorResult.failure(
-                    new OAuth2Error("invalid_token", "El token no estÃ¡ destinado a esta API (audience incorrecta o ausente)", null)
+                    new OAuth2Error("invalid_token", "El token no está destinado a esta API (audience incorrecta o ausente)", null)
             );
         }
     }
@@ -164,4 +162,3 @@ public class SecurityConfig {
         return source;
     }
 }
-
