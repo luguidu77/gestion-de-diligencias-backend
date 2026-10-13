@@ -1,5 +1,7 @@
 package es.guardiacivil.diligencias.documento.controller;
 
+import es.guardiacivil.diligencias.core.config.Roles;
+
 import es.guardiacivil.diligencias.documento.dto.DocumentoDto;
 import es.guardiacivil.diligencias.documento.dto.SubirDocumentoRequest;
 import es.guardiacivil.diligencias.documento.service.DocumentoService;
@@ -21,7 +23,7 @@ public class DocumentoController {
     private final DocumentoService documentoService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('DILIGENCIA_WRITE')")
+    @PreAuthorize(Roles.PUEDE_ESCRIBIR)
     public ResponseEntity<DocumentoDto> subir(
             @PathVariable Long diligenciaId,
             @RequestPart("archivo") MultipartFile archivo,

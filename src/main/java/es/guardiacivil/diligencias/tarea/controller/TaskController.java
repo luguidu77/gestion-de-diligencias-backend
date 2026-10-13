@@ -1,5 +1,7 @@
 package es.guardiacivil.diligencias.tarea.controller;
 
+import es.guardiacivil.diligencias.core.config.Roles;
+
 import es.guardiacivil.diligencias.tarea.dto.SolicitudTareaRequest;
 import es.guardiacivil.diligencias.tarea.dto.TareaResponse;
 import es.guardiacivil.diligencias.tarea.service.TaskIntegrationService;
@@ -35,12 +37,12 @@ public class TaskController {
      * GET /api/v1/tareas/agente/{tip}
      *
      * Devuelve las tareas pendientes de un agente identificado por su TIP.
-     * El agente solo puede consultar sus propias tareas.
+     * El agente consulta sus tareas; ADMIN_UNIDAD las de su unidad y SUPERADMIN todas.
      *
      * Ejemplo: GET /api/v1/tareas/agente/S11223A
      */
     @GetMapping("/agente/{tip}")
-    @PreAuthorize("hasRole('AGENTE') or hasRole('INSTRUCTOR') or hasRole('SUPERVISOR')")
+    @PreAuthorize(Roles.TODOS)
     public ResponseEntity<List<TareaResponse>> obtenerTareasPorAgente(@PathVariable String tip) {
         List<TareaResponse> tareas = taskIntegrationService.obtenerTareasPorAgente(tip);
         return ResponseEntity.ok(tareas);
@@ -50,7 +52,7 @@ public class TaskController {
      * POST /api/v1/tareas
      *
      * Crea una nueva tarea en la app externa de tareas vinculada a un expediente.
-     * Restringido a roles con permisos de gestión (INSTRUCTOR / SUPERVISOR / ADMIN).
+     * Restringido a roles con permisos de gestión (TRAMITADOR / ADMIN_UNIDAD / SUPERADMIN).
      *
      * Body JSON:
      * {
@@ -64,7 +66,7 @@ public class TaskController {
      * }
      */
     @PostMapping
-    @PreAuthorize("hasRole('INSTRUCTOR') or hasRole('SUPERVISOR') or hasRole('ADMIN')")
+    @PreAuthorize(Roles.PUEDE_ESCRIBIR)
     public ResponseEntity<String> crearTarea(@RequestBody SolicitudTareaRequest request) {
         String tareaExternaId = taskIntegrationService.notificarAsignacion(request);
         return ResponseEntity.ok(tareaExternaId);
@@ -74,12 +76,12 @@ public class TaskController {
      * PATCH /api/v1/tareas/{tareaId}/estado
      *
      * Actualiza el estado de una tarea existente en la app externa.
-     * Requiere rol SUPERVISOR o ADMIN.
+     * Requiere permisos de escritura y acceso a la unidad del expediente.
      *
      * Ejemplo: PATCH /api/v1/tareas/TASK-SIM-1001/estado?nuevoEstado=COMPLETADA
      */
     @PatchMapping("/{tareaId}/estado")
-    @PreAuthorize("hasRole('SUPERVISOR') or hasRole('ADMIN')")
+    @PreAuthorize(Roles.PUEDE_ESCRIBIR)
     public ResponseEntity<Void> actualizarEstado(
             @PathVariable String tareaId,
             @RequestParam String nuevoEstado) {

@@ -90,3 +90,13 @@ springdoc:
     persist-authorization: true
     operations-sorter: method
     tags-sorter: alpha
+
+# Comprobación de salud sin detalles internos
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

@@ -1,5 +1,7 @@
 package es.guardiacivil.diligencias.requerimiento.controller;
 
+import es.guardiacivil.diligencias.core.config.Roles;
+
 import es.guardiacivil.diligencias.requerimiento.dto.CrearRequerimientoJudicialRequest;
 import es.guardiacivil.diligencias.requerimiento.dto.RequerimientoJudicialResponse;
 import es.guardiacivil.diligencias.requerimiento.service.RequerimientoJudicialService;
@@ -19,12 +21,12 @@ public class RequerimientoJudicialController {
     private final RequerimientoJudicialService requerimientoService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('REQUERIMIENTO_WRITE')")
+    @PreAuthorize(Roles.PUEDE_ESCRIBIR)
     public ResponseEntity<RequerimientoJudicialResponse> crearRequerimiento(
             @PathVariable String numeroDiligencia,
             @Valid @RequestBody CrearRequerimientoJudicialRequest request
     ) {
-        RequerimientoJudicialResponse req = requerimientoService.crearRequerimiento(request, numeroDiligencia);
+        RequerimientoJudicialResponse req = requerimientoService.crearRequerimientoInterno(request, numeroDiligencia);
         URI location = URI.create("/api/requerimientos/%d".formatted(req.id()));
         return ResponseEntity.created(location).body(req);
     }

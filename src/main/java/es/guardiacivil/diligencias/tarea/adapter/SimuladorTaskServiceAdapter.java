@@ -3,103 +3,88 @@ package es.guardiacivil.diligencias.tarea.adapter;
 import es.guardiacivil.diligencias.tarea.dto.SolicitudTareaRequest;
 import es.guardiacivil.diligencias.tarea.dto.TareaResponse;
 import es.guardiacivil.diligencias.tarea.port.TaskIntegrationPort;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * ====================================================================
- *  ADAPTADOR DE LABORATORIO — Simulador de App Externa de Tareas
- * ====================================================================
- *
- * Implementa {@link TaskIntegrationPort} para el entorno de laboratorio FP
- * (@Profile "lab"). NO realiza ninguna llamada HTTP real.
- *
- * Simula el comportamiento de la app de tareas con respuestas ficticias
- * coherentes, permitiendo desarrollar y probar todo el flujo de asignación
- * de tareas sin depender de ninguna app externa instalada.
- *
- * Al pasar a producción, este adaptador es sustituido automáticamente por
- * el adaptador real (@Profile "prod") sin modificar ninguna otra clase.
- *
- * Activación: spring.profiles.active=lab  (application-lab.yml)
+ * Simulador local de tareas.
+ * Conserva los datos en memoria hasta reiniciar la aplicación.
  */
 @Service
 @Profile({"lab", "test", "local"})
 public class SimuladorTaskServiceAdapter implements TaskIntegrationPort {
 
-    private static final Logger log = LoggerFactory.getLogger(SimuladorTaskServiceAdapter.class);
+    private record TareaAsignada(String tip, TareaResponse tarea) {}
 
-    // Contador incremental para generar IDs simulados únicos por cada tarea creada
-    private final AtomicLong contadorSimulado = new AtomicLong(1000L);
+    private final AtomicLong contador = new AtomicLong(1000L);
+    private final ConcurrentMap<String, TareaAsignada> tareas =
+            new ConcurrentHashMap<>();
 
-    /**
-     * Simula la creación de una tarea en la app externa.
-     * En producción, aquí se haría una llamada HTTP REST a la API real (Jira, Wekan, etc.)
-     */
     @Override
     public String crearTarea(SolicitudTareaRequest request) {
-        String idSimulado = "TASK-SIM-" + contadorSimulado.getAndIncrement();
+        String id = "TASK-SIM-" + contador.getAndIncrement();
 
-        log.info(
-            "[SIMULADOR TAREAS] ✅ Tarea creada — ID: {} | Expediente: {} | Agente: {} ({}) | Prioridad: {}",
-            idSimulado,
-            request.numeroExpediente(),
-            request.tipAgente(),
-            request.empleoAgente(),
-            request.prioridad()
+        TareaResponse tarea = new TareaResponse(
+                id,
+                request.numeroExpediente(),
+                request.descripcion(),
+                "PENDIENTE",
+                request.prioridad(),
+                LocalDateTime.now(),
+                request.fechaLimite(),
+                "/api/v1/tareas/" + id
         );
 
-        return idSimulado;
+        tareas.put(id, new TareaAsignada(request.tipAgente(), tarea));
+        return id;
     }
 
-    /**
-     * Simula la actualización de estado de una tarea existente.
-     * En producción, aquí se haría un PATCH/PUT a la API real.
-     */
+    @Override
+    public Optional<TareaResponse> consultarTareaPorId(String tareaExternaId) {
+        return Optional.ofNullable(tareas.get(tareaExternaId))
+                .map(TareaAsignada::tarea);
+    }
+
     @Override
     public void actualizarEstadoTarea(String tareaExternaId, String nuevoEstado) {
-        log.info(
-            "[SIMULADOR TAREAS] 🔄 Estado actualizado — Tarea: {} → Nuevo estado: {}",
-            tareaExternaId,
-            nuevoEstado
-        );
+        tareas.compute(tareaExternaId, (id, asignada) -> {
+            if (asignada == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Tarea no encontrada");
+            }
+
+            TareaResponse anterior = asignada.tarea();
+            TareaResponse actualizada = new TareaResponse(
+                    anterior.tareaExternaId(),
+                    anterior.numeroExpediente(),
+                    anterior.descripcion(),
+                    nuevoEstado,
+                    anterior.prioridad(),
+                    anterior.fechaCreacion(),
+                    anterior.fechaLimite(),
+                    anterior.urlTareaExterna()
+            );
+
+            return new TareaAsignada(asignada.tip(), actualizada);
+        });
     }
 
-    /**
-     * Simula la consulta de tareas pendientes de un agente.
-     * Devuelve una lista ficticia de 2 tareas de ejemplo para pruebas de frontend.
-     */
     @Override
     public List<TareaResponse> consultarTareasPorAgente(String tip) {
-        log.info("[SIMULADOR TAREAS] 🔍 Consultando tareas del agente TIP: {}", tip);
-
-        return List.of(
-            new TareaResponse(
-                "TASK-SIM-1001",
-                "2026-001755-0001442",
-                "Realizar inspección ocular del vehículo. Localización: Polígono Industrial Norte.",
-                "PENDIENTE",
-                "ALTA",
-                LocalDateTime.now().minusHours(2),
-                LocalDateTime.now().plusDays(1),
-                "http://localhost:8080/api/v1/tareas/TASK-SIM-1001"
-            ),
-            new TareaResponse(
-                "TASK-SIM-1002",
-                "2026-001755-0001443",
-                "Recopilar documentación bancaria para informe pericial.",
-                "EN_PROCESO",
-                "MEDIA",
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(3),
-                "http://localhost:8080/api/v1/tareas/TASK-SIM-1002"
-            )
-        );
+        return tareas.values().stream()
+                .filter(asignada -> asignada.tip().equalsIgnoreCase(tip))
+                .map(TareaAsignada::tarea)
+                .sorted(Comparator.comparing(TareaResponse::tareaExternaId))
+                .toList();
     }
 }

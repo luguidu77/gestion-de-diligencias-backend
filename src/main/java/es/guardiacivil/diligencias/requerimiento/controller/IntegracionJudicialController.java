@@ -82,7 +82,7 @@ public class IntegracionJudicialController {
         boolean esNuevo = !requerimientoService.existeRequerimiento(request.identificadorExterno());
 
         RequerimientoJudicialResponse response =
-                requerimientoService.crearRequerimiento(request, client.clientId());
+                requerimientoService.crearRequerimientoExterno(request);
 
         return esNuevo
                 ? ResponseEntity.status(HttpStatus.CREATED).body(response)
