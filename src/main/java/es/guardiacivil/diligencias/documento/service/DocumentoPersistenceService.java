@@ -30,6 +30,7 @@ public class DocumentoPersistenceService {
                 .tituloDocumento(request.tituloDocumento())
                 .mimeType(archivo.getContentType())
                 .tamanoBytes(archivo.getSize())
+                .hashSha256(calcularSha256(archivo))
                 .destino(request.destino())
                 .estadoDocumento(request.estadoDocumento())
                 .estadoAlmacenamiento(EstadoAlmacenamiento.PENDIENTE)
@@ -55,5 +56,28 @@ public class DocumentoPersistenceService {
             log.error("Error al almacenar en Alfresco el documento ID {}: {}", documentoId, exception.getMessage());
             documentoRepository.save(metadata);
         });
+    }
+
+    private String calcularSha256(MultipartFile archivo) {
+        try (java.io.InputStream entrada = archivo.getInputStream()) {
+            java.security.MessageDigest digest =
+                    java.security.MessageDigest.getInstance("SHA-256");
+            byte[] buffer = new byte[8192];
+            int leidos;
+
+            while ((leidos = entrada.read(buffer)) != -1) {
+                digest.update(buffer, 0, leidos);
+            }
+
+            return java.util.HexFormat.of().formatHex(digest.digest());
+        } catch (java.io.IOException exception) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "No se ha podido leer el archivo",
+                    exception);
+        } catch (java.security.NoSuchAlgorithmException exception) {
+            throw new IllegalStateException(
+                    "SHA-256 no está disponible", exception);
+        }
     }
 }

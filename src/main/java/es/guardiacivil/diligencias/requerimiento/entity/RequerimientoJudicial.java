@@ -52,6 +52,18 @@ public class RequerimientoJudicial extends Auditable {
     @Column(name = "referencia_judicial", nullable = false)
     private String referenciaJudicial;
 
+    @Column(name = "juzgado_origen", nullable = false, length = 200)
+    private String juzgadoOrigen;
+
+    @Column(name = "numero_procedimiento", nullable = false, length = 100)
+    private String numeroProcedimiento;
+
+    @Column(name = "asunto", nullable = false, length = 250)
+    private String asunto;
+
+    @Column(name = "fecha_escrito", nullable = false)
+    private LocalDate fechaEscrito;
+
     /**
      * Identificador único generado por la aplicación judicial.
      * Sirve para garantizar idempotencia: misma petición = misma respuesta.

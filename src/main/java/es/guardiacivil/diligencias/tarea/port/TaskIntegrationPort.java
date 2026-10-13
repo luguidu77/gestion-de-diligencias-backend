@@ -30,6 +30,12 @@ public interface TaskIntegrationPort {
     String crearTarea(SolicitudTareaRequest request);
 
     /**
+     * Obtiene la tarea y su expediente desde la aplicación externa.
+     * Esta relación se utiliza para comprobar la autorización.
+     */
+    java.util.Optional<TareaResponse> consultarTareaPorId(String tareaExternaId);
+
+    /**
      * Actualiza el estado de una tarea ya existente en la aplicación externa.
      * Se invoca, por ejemplo, cuando la diligencia cambia de estado o el trámite
      * es completado / cancelado.

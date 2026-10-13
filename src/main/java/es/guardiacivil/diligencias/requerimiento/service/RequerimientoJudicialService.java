@@ -4,6 +4,7 @@ import es.guardiacivil.diligencias.requerimiento.dto.CrearRequerimientoJudicialR
 import es.guardiacivil.diligencias.diligencia.dto.EstadoDiligenciaJudicialResponse;
 import es.guardiacivil.diligencias.requerimiento.dto.RequerimientoJudicialResponse;
 import es.guardiacivil.diligencias.diligencia.entity.Diligencia;
+import es.guardiacivil.diligencias.diligencia.service.DiligenciaService;
 import es.guardiacivil.diligencias.requerimiento.entity.EstadoRequerimientoJudicial;
 import es.guardiacivil.diligencias.requerimiento.entity.RequerimientoJudicial;
 import es.guardiacivil.diligencias.diligencia.repository.DiligenciaRepository;
@@ -20,6 +21,7 @@ public class RequerimientoJudicialService {
 
     private final RequerimientoJudicialRepository requerimientoRepository;
     private final DiligenciaRepository diligenciaRepository;
+    private final DiligenciaService diligenciaService;
 
     @Transactional(readOnly = true)
     public EstadoDiligenciaJudicialResponse consultarEstado(String numeroDiligencia, String identificador) {
@@ -41,13 +43,40 @@ public class RequerimientoJudicialService {
     }
 
     @Transactional
-    public RequerimientoJudicialResponse crearRequerimiento(CrearRequerimientoJudicialRequest request, String numeroDiligencia) {
-        Diligencia diligencia = diligenciaRepository.findByNumeroExpediente(numeroDiligencia)
-                .orElseThrow(() -> new IllegalArgumentException("Diligencia no encontrada"));
+    public RequerimientoJudicialResponse crearRequerimientoInterno(
+            CrearRequerimientoJudicialRequest request,
+            String numeroDiligencia) {
+        if (!numeroDiligencia.equals(request.referenciaPolicial())) {
+            throw new IllegalArgumentException(
+                    "La referencia policial del cuerpo no coincide con la URL");
+        }
+
+        Diligencia diligencia =
+                diligenciaService.obtenerDiligenciaEntidadPorNumero(numeroDiligencia);
+        return crearRequerimiento(request, diligencia);
+    }
+
+    @Transactional
+    public RequerimientoJudicialResponse crearRequerimientoExterno(
+            CrearRequerimientoJudicialRequest request) {
+        Diligencia diligencia =
+                diligenciaRepository.findByNumeroExpediente(request.referenciaPolicial())
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Diligencia no encontrada"));
+        return crearRequerimiento(request, diligencia);
+    }
+
+    private RequerimientoJudicialResponse crearRequerimiento(
+            CrearRequerimientoJudicialRequest request,
+            Diligencia diligencia) {
 
         RequerimientoJudicial req = RequerimientoJudicial.builder()
                 .diligencia(diligencia)
                 .referenciaJudicial(request.referenciaJudicial())
+                .juzgadoOrigen(request.juzgadoOrigen())
+                .numeroProcedimiento(request.numeroProcedimiento())
+                .asunto(request.asunto())
+                .fechaEscrito(request.fechaEscrito())
                 .identificadorExterno(request.identificadorExterno())
                 .sistemaOrigen("SISTEMA_JUDICIAL")
                 .tipo(request.tipo())

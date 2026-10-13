@@ -62,5 +62,13 @@ public record CrearRequerimientoJudicialRequest(
                 example = "REQ-EXT-2026-998811",
                 requiredMode = Schema.RequiredMode.REQUIRED
         )
-        @NotBlank String identificadorExterno
+        @NotBlank String identificadorExterno,
+
+        @NotBlank @Size(max = 200) String juzgadoOrigen,
+
+        @NotBlank @Size(max = 100) String numeroProcedimiento,
+
+        @NotBlank @Size(max = 250) String asunto,
+
+        @NotNull LocalDate fechaEscrito
 ) {}

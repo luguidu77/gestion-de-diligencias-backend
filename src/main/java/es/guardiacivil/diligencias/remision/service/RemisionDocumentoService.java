@@ -1,5 +1,6 @@
 package es.guardiacivil.diligencias.remision.service;
 
+import es.guardiacivil.diligencias.core.security.UnidadAccessService;
 import es.guardiacivil.diligencias.usuario.service.UsuarioService;
 
 import es.guardiacivil.diligencias.remision.dto.RemisionDocumentoResponse;
@@ -24,11 +25,19 @@ public class RemisionDocumentoService {
     private final RemisionDocumentoRepository remisionRepository;
     private final DocumentoMetadataRepository documentoRepository;
     private final UsuarioService usuarioService;
+    private final UnidadAccessService unidadAccessService;
 
     @Transactional
     public RemisionDocumentoResponse solicitarRemision(Long documentoId, SolicitudRemisionRequest request) {
         DocumentoMetadata documento = documentoRepository.findById(documentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Documento no encontrado"));
+
+        unidadAccessService.checkAccessToUnit(
+                documento.getDiligencia() != null
+                        && documento.getDiligencia().getUnidad() != null
+                        ? documento.getDiligencia().getUnidad().getCodigo()
+                        : null
+        );
 
         Usuario usuario = usuarioService.obtenerUsuarioAutenticado();
 

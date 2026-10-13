@@ -10,7 +10,7 @@ import es.guardiacivil.diligencias.diligencia.entity.Diligencia;
 import es.guardiacivil.diligencias.documento.entity.DocumentoMetadata;
 import es.guardiacivil.diligencias.usuario.entity.Usuario;
 import es.guardiacivil.diligencias.diligencia.repository.ActuacionRepository;
-import es.guardiacivil.diligencias.diligencia.repository.DiligenciaRepository;
+import es.guardiacivil.diligencias.diligencia.service.DiligenciaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,18 +21,25 @@ public class DocumentoService {
 
     private final DocumentoPersistenceService documentoPersistenceService;
     private final AlfrescoService alfrescoService;
-    private final DiligenciaRepository diligenciaRepository;
+    private final DiligenciaService diligenciaService;
     private final ActuacionRepository actuacionRepository;
     private final UsuarioService usuarioService;
 
     public DocumentoDto subirDocumento(Long diligenciaId, MultipartFile archivo, SubirDocumentoRequest request) {
-        Diligencia diligencia = diligenciaRepository.findById(diligenciaId)
-                .orElseThrow(() -> new IllegalArgumentException("Diligencia no encontrada"));
+        Diligencia diligencia = diligenciaService.obtenerDiligenciaEntidad(diligenciaId);
         
         Actuacion actuacion = null;
         if (request.actuacionId() != null) {
             actuacion = actuacionRepository.findById(request.actuacionId())
-                    .orElseThrow(() -> new IllegalArgumentException("Actuacion no encontrada"));
+                    .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                            org.springframework.http.HttpStatus.NOT_FOUND,
+                            "Actuación no encontrada"));
+            if (actuacion.getDiligencia() == null
+                    || !diligenciaId.equals(actuacion.getDiligencia().getId())) {
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND,
+                        "Actuación no encontrada");
+            }
         }
 
         Usuario usuario = usuarioService.obtenerUsuarioAutenticado();

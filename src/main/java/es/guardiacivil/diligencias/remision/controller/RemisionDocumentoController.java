@@ -1,5 +1,7 @@
 package es.guardiacivil.diligencias.remision.controller;
 
+import es.guardiacivil.diligencias.core.config.Roles;
+
 import es.guardiacivil.diligencias.remision.dto.RemisionDocumentoResponse;
 import es.guardiacivil.diligencias.remision.dto.SolicitudRemisionRequest;
 import es.guardiacivil.diligencias.remision.service.RemisionDocumentoService;
@@ -19,7 +21,7 @@ public class RemisionDocumentoController {
     private final RemisionDocumentoService remisionService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('REMITIR_DOCUMENTO')")
+    @PreAuthorize(Roles.PUEDE_ESCRIBIR)
     public ResponseEntity<RemisionDocumentoResponse> solicitarRemision(
             @PathVariable Long documentoId,
             @Valid @RequestBody SolicitudRemisionRequest request

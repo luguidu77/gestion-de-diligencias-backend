@@ -2,7 +2,7 @@ package es.guardiacivil.diligencias.diligencia.service;
 
 import es.guardiacivil.diligencias.usuario.service.UsuarioService;
 
-import es.guardiacivil.diligencias.usuario.service.AuthenticatedUserService;
+import es.guardiacivil.diligencias.core.security.UnidadAccessService;
 import es.guardiacivil.diligencias.diligencia.dto.DiligenciaDTO;
 import es.guardiacivil.diligencias.diligencia.dto.DiligenciaCreateRequest;
 import es.guardiacivil.diligencias.diligencia.entity.Diligencia;
@@ -27,15 +27,15 @@ public class DiligenciaService {
 
     private final DiligenciaRepository diligenciaRepository;
     private final UsuarioService usuarioService;
-    private final AuthenticatedUserService usuarioActualService;
+    private final UnidadAccessService unidadAccessService;
 
     @Transactional(readOnly = true)
     public List<DiligenciaDTO> obtenerDiligenciasPorUnidad() {
-        if (usuarioActualService.isSuperadmin()) {
+        if (unidadAccessService.isSuperadmin()) {
             return diligenciaRepository.findAll().stream().map(this::mapToDTO).collect(Collectors.toList());
         }
         
-        String unitCode = usuarioActualService.getUnitCode();
+        String unitCode = unidadAccessService.getRequiredUnitCode();
         if (unitCode == null || unitCode.isBlank()) {
             throw new org.springframework.security.access.AccessDeniedException(
                     "El token JWT no contiene una unidad válida.");
@@ -48,11 +48,11 @@ public class DiligenciaService {
 
     @Transactional(readOnly = true)
     public Page<DiligenciaDTO> obtenerDiligenciasPorUnidadPaginado(Pageable pageable) {
-        if (usuarioActualService.isSuperadmin()) {
+        if (unidadAccessService.isSuperadmin()) {
             return diligenciaRepository.findAll(pageable).map(this::mapToDTO);
         }
 
-        String unitCode = usuarioActualService.getUnitCode();
+        String unitCode = unidadAccessService.getRequiredUnitCode();
         if (unitCode == null || unitCode.isBlank()) {
             throw new org.springframework.security.access.AccessDeniedException(
                     "El token JWT no contiene una unidad válida.");
@@ -72,15 +72,26 @@ public class DiligenciaService {
         Diligencia diligencia = diligenciaRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe la diligencia con ID: " + id));
 
-        if (usuarioActualService.isSuperadmin()) {
-            return diligencia;
-        }
+        unidadAccessService.checkAccessToUnit(
+                diligencia.getUnidad() != null
+                        ? diligencia.getUnidad().getCodigo()
+                        : null
+        );
 
-        String unitCode = usuarioActualService.getUnitCode();
-        if (diligencia.getUnidad() == null || !diligencia.getUnidad().getCodigo().equals(unitCode)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe la diligencia con ID: " + id);
-        }
+        return diligencia;
+    }
 
+    @Transactional(readOnly = true)
+    public Diligencia obtenerDiligenciaEntidadPorNumero(String numeroExpediente) {
+        Diligencia diligencia = diligenciaRepository.findByNumeroExpediente(numeroExpediente)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Diligencia no encontrada"));
+
+        unidadAccessService.checkAccessToUnit(
+                diligencia.getUnidad() != null
+                        ? diligencia.getUnidad().getCodigo()
+                        : null
+        );
         return diligencia;
     }
 
