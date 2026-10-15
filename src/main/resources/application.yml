@@ -48,6 +48,10 @@ spring:
 # Cambiar de proveedor de identidad solo requiere actualizar estas propiedades.
 # ─────────────────────────────────────────────────────────────────────────────
 app:
+  integraciones:
+    judicial:
+      # API externa pendiente de completar y validar antes de su uso.
+      enabled: ${INTEGRACION_JUDICIAL_ENABLED:false}
   security:
     jwt:
       # URI del endpoint JWKS para verificar la firma de los tokens.
