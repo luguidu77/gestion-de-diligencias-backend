@@ -1,5 +1,7 @@
 package es.guardiacivil.diligencias.core.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Contact;
@@ -76,6 +78,7 @@ public class OpenApiConfig {
      * Incluye consulta de estado de diligencias y recepciÃ³n de requerimientos judiciales (client_credentials).
      */
     @Bean
+    @ConditionalOnProperty(name = "app.integraciones.judicial.enabled", havingValue = "true", matchIfMissing = false)
     public GroupedOpenApi judicialApi() {
         return GroupedOpenApi.builder()
                 .group("integracion-judicial")

@@ -1,5 +1,7 @@
 package es.guardiacivil.diligencias.requerimiento.controller;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import es.guardiacivil.diligencias.config.AuthenticatedClient;
 import es.guardiacivil.diligencias.config.AuthenticatedClientService;
 import es.guardiacivil.diligencias.core.config.Roles;
@@ -22,6 +24,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Integración Judicial", description = "Endpoints técnicos para consumo exclusivo por aplicaciones del órgano judicial (OAuth2 client_credentials)")
+@ConditionalOnProperty(name = "app.integraciones.judicial.enabled", havingValue = "true", matchIfMissing = false)
 @RestController
 @RequestMapping("/api/integraciones/judicial")
 @RequiredArgsConstructor
