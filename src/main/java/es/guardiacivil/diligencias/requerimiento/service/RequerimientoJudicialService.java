@@ -4,6 +4,7 @@ import es.guardiacivil.diligencias.requerimiento.dto.CrearRequerimientoJudicialR
 import es.guardiacivil.diligencias.diligencia.dto.EstadoDiligenciaJudicialResponse;
 import es.guardiacivil.diligencias.requerimiento.dto.RequerimientoJudicialResponse;
 import es.guardiacivil.diligencias.diligencia.entity.Diligencia;
+import es.guardiacivil.diligencias.diligencia.entity.EstadoDiligencia;
 import es.guardiacivil.diligencias.diligencia.service.DiligenciaService;
 import es.guardiacivil.diligencias.requerimiento.entity.EstadoRequerimientoJudicial;
 import es.guardiacivil.diligencias.requerimiento.entity.RequerimientoJudicial;
@@ -53,6 +54,7 @@ public class RequerimientoJudicialService {
 
         Diligencia diligencia =
                 diligenciaService.obtenerDiligenciaEntidadPorNumero(numeroDiligencia);
+        rechazarSiEsBorrador(diligencia);
         return crearRequerimiento(request, diligencia);
     }
 
@@ -63,6 +65,7 @@ public class RequerimientoJudicialService {
                 diligenciaRepository.findByNumeroExpediente(request.referenciaPolicial())
                         .orElseThrow(() -> new IllegalArgumentException(
                                 "Diligencia no encontrada"));
+        rechazarSiEsBorrador(diligencia);
         return crearRequerimiento(request, diligencia);
     }
 
@@ -115,5 +118,18 @@ public class RequerimientoJudicialService {
                 req.getResultado(),
                 req.getObservaciones()
         );
+    }
+
+    /**
+     * Lanza 422 si la diligencia está en BORRADOR.
+     * Los requerimientos judiciales exigen que el expediente ya tenga número SIGO oficial.
+     */
+    private void rechazarSiEsBorrador(Diligencia diligencia) {
+        if (diligencia.getEstado() == EstadoDiligencia.BORRADOR) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY,
+                    "No se pueden crear requerimientos sobre un expediente en estado BORRADOR. "
+                    + "Asigne primero el número SIGO.");
+        }
     }
 }

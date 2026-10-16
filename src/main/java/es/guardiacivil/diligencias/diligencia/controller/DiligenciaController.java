@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -77,6 +78,17 @@ public class DiligenciaController {
             @PathVariable Long id,
             @RequestParam EstadoDiligencia estado) {
         return ResponseEntity.ok(diligenciaService.cambiarEstado(id, estado));
+    }
+
+    @Operation(summary = "Asignar número SIGO a un expediente en borrador",
+               description = "Asigna manualmente el número SIGO. Si el expediente ya tiene delito y gravedad, pasa automáticamente a ABIERTA.")
+    @PatchMapping("/{id}/numero-sigo")
+    @PreAuthorize(Roles.PUEDE_ESCRIBIR)
+    @AuditableEvent(action = "ASIGNAR_NUMERO_SIGO", entity = "diligencias")
+    public ResponseEntity<DiligenciaDTO> asignarNumeroSigo(
+            @PathVariable Long id,
+            @NotBlank @RequestParam String numeroSigo) {
+        return ResponseEntity.ok(diligenciaService.asignarNumeroSigo(id, numeroSigo));
     }
 
     @Operation(summary = "Eliminar una diligencia")

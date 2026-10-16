@@ -5,6 +5,7 @@ import es.guardiacivil.diligencias.usuario.service.UsuarioService;
 
 import es.guardiacivil.diligencias.remision.dto.RemisionDocumentoResponse;
 import es.guardiacivil.diligencias.remision.dto.SolicitudRemisionRequest;
+import es.guardiacivil.diligencias.diligencia.entity.EstadoDiligencia;
 import es.guardiacivil.diligencias.documento.entity.DocumentoMetadata;
 import es.guardiacivil.diligencias.remision.entity.EstadoRemision;
 import es.guardiacivil.diligencias.remision.entity.RemisionDocumento;
@@ -38,6 +39,14 @@ public class RemisionDocumentoService {
                         ? documento.getDiligencia().getUnidad().getCodigo()
                         : null
         );
+
+        if (documento.getDiligencia() != null
+                && documento.getDiligencia().getEstado() == EstadoDiligencia.BORRADOR) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY,
+                    "No se pueden remitir documentos de un expediente en estado BORRADOR. "
+                    + "Asigne primero el número SIGO.");
+        }
 
         Usuario usuario = usuarioService.obtenerUsuarioAutenticado();
 

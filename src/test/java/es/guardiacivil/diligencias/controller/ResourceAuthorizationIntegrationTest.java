@@ -116,9 +116,15 @@ class ResourceAuthorizationIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
-        return new Expediente(
-                ((Number) JsonPath.read(respuesta, "$.id")).longValue(),
-                JsonPath.read(respuesta, "$.numeroExpediente"));
+        long id = ((Number) JsonPath.read(respuesta, "$.id")).longValue();
+        String sigo = String.format("2026-000001-%08d", id);
+
+        mockMvc.perform(patch("/api/diligencias/" + id + "/numero-sigo")
+                        .param("numeroSigo", sigo)
+                        .with(usuario(tip, unidad, "TRAMITADOR")))
+                .andExpect(status().isOk());
+
+        return new Expediente(id, sigo);
     }
 
     private long subirDocumento(Expediente expediente, String tip, String unidad)
