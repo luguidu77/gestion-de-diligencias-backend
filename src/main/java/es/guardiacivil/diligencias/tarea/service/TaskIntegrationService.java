@@ -3,6 +3,7 @@ package es.guardiacivil.diligencias.tarea.service;
 import es.guardiacivil.diligencias.core.config.Roles;
 import es.guardiacivil.diligencias.core.security.UnidadAccessService;
 import es.guardiacivil.diligencias.diligencia.entity.Diligencia;
+import es.guardiacivil.diligencias.diligencia.entity.EstadoDiligencia;
 import es.guardiacivil.diligencias.diligencia.service.DiligenciaService;
 import es.guardiacivil.diligencias.tarea.dto.SolicitudTareaRequest;
 import es.guardiacivil.diligencias.tarea.dto.TareaResponse;
@@ -44,6 +45,12 @@ public class TaskIntegrationService {
 
         Diligencia diligencia = diligenciaService
                 .obtenerDiligenciaEntidadPorNumero(request.numeroExpediente());
+
+        if (diligencia.getEstado() == EstadoDiligencia.BORRADOR) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "No se pueden asignar tareas a un expediente en estado BORRADOR. Asigne primero el número SIGO.");
+        }
 
         Usuario agente = obtenerAgente(request.tipAgente());
         comprobarUnidadAgente(agente);

@@ -134,7 +134,15 @@ class TaskAuthorizationIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
-        return JsonPath.read(respuesta, "$.numeroExpediente");
+        long id = ((Number) JsonPath.read(respuesta, "$.id")).longValue();
+        String sigo = String.format("2026-000001-%08d", id);
+
+        mockMvc.perform(patch("/api/diligencias/" + id + "/numero-sigo")
+                        .param("numeroSigo", sigo)
+                        .with(usuario(tip, unidad, "TRAMITADOR")))
+                .andExpect(status().isOk());
+
+        return sigo;
     }
 
     private String crearTarea(String numero, String tip, String unidad) throws Exception {

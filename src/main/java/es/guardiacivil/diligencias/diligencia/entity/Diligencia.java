@@ -21,7 +21,7 @@ public class Diligencia extends Auditable {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "numero_expediente", unique = true, nullable = false, columnDefinition = "text")
+    @Column(name = "numero_expediente", unique = true, columnDefinition = "text")
     private String numeroExpediente;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -59,7 +59,4 @@ public class Diligencia extends Auditable {
     @Version
     private Long version;
 
-    public static String generarNumeroExpedienteOficial(String codunidad, long count) {
-        return String.format("%d-%s-%07d", LocalDate.now().getYear(), codunidad, count);
-    }
 }
